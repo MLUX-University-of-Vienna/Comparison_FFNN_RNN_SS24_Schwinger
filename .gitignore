@@ -1,3 +1,5 @@
 datasets
 .ipynb_checkpoints
 trained_models  
+example.json
+/Helpers/__pycache__
