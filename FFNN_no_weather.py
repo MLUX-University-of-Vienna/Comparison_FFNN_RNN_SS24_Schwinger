@@ -1,5 +1,6 @@
 import logging
-
+import matplotlib
+import os
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -9,12 +10,18 @@ from Helpers import (load_data, preprocess_dataframe,
 from Helpers.ffnn_model import *
 from Helpers.model import *
 
+matplotlib.use('Qt5Agg')
+directory = "logging"
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename="logging\\FFNN.log",
-                    encoding='utf-8', level=logging.INFO)
+log_file_path = os.path.join("logging", "FFNN.log")
+logging.basicConfig(filename=log_file_path, encoding='utf-8',
+                    level=logging.INFO)
 
 dataset = 'demo-s-anon.json'
-path_to_dataset = f'datasets\\{dataset}'
+path_to_dataset = os.path.join('datasets', dataset)
 parsed_json = load_data.load_json(path_to_dataset)
 all_sessions = load_data.load_data_from_larger_json(parsed_json)
 
