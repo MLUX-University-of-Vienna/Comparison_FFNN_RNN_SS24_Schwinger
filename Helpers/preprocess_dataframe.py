@@ -10,6 +10,9 @@ Functions:
         Calculates how often each unique values appears in a specific column of the {original_dataframe}.
         Rows in the {original_dataframe} with unique values appearing below the {count_threshold} will get removed from the DataFrame.
 
+    get_number_of_folds(original_dataframe: pd.DataFrame, name_of_the_column: str) -> int:
+        Returns the number of unique value's for a specific column of the {original_dataframe}.
+    
     number_of_unique_values_per_column(dataframe: pd.DataFrame) -> list[(str, int)]:
         Returns a list of tuples containing column names and the amount of unique values in this column.
 
@@ -22,8 +25,20 @@ Functions:
     move_column_to_the_front(original_dataframe: pd.DataFrame, column_to_move: str) -> pd.DataFrame:
         Returns the DataFrame with the {column_to_move} moved at the first index of the DataFrame columns.
     
+    addPrevAndPrevPrevEvent(original_dataframe: pd.DataFrame, unique_classifications: int, event_column_name: str, session_column_name: str) -> pd.DataFrame:
+        Returns the DataFrame with the prev_event and the prev_prev_event feature.
+
     get_weather_data(original_dataframe: pd.DataFrame, column_to_encode: str, json_subarray_name: str, parsed_json: dict) -> pd.DataFrame:
         Returns the DataFrame with more detailed weather data. 
+
+    define_columns_to_drop(original_dataframe: pd.DataFrame) -> list[str]:
+        Returns a list of all absolute columns from a predefined list that are presented in the DataFrame.
+
+    define_ohe_features_list(original_dataframe: pd.DataFrame) -> list[str]:
+        Returns a list of all one hot encoded features from a predefined list that are presented in the DataFrame.
+
+    define_ordinal_features_list(original_dataframe: pd.DataFrame) -> list[str]:
+        Returns a list of all ordinal features from a predefined list that are presented in the DataFrame.
 
     encode_cyclic_feature(original_dataframe: pd.DataFrame, column_to_encode: str, period: int) -> pd.DataFrame:    
         Encodes a cyclical feature in a DataFrame column using a cosine and sine transformation, 
@@ -132,6 +147,21 @@ def remove_low_appearance_values(original_dataframe: pd.DataFrame, count_thresho
     return original_dataframe[~original_dataframe[column_name].isin(appearance_count[appearance_count < count_threshold].index.tolist())]
 
 
+def get_number_of_folds(original_dataframe: pd.DataFrame, name_of_the_column: str) -> int:
+    """
+    Returns the number of unique value's for a specific column of the {original_dataframe}.
+    Args:
+        original_dataframe (pd.DataFrame): The DataFrame used to find all columns are the number of unique values per column.
+        name_of_the_column (str): Name of the columns whose number of unique values is searched.
+
+    Returns:
+        int: Number of unique values in the searched column
+    """
+    for key, value in number_of_unique_values_per_column(original_dataframe):
+        if key == name_of_the_column:
+            return value
+
+
 def number_of_unique_values_per_column(dataframe: pd.DataFrame) -> list[(str, int)]:
     """ 
     Returns a list of tuples containing column names and the amount of unique values in this column.
@@ -186,6 +216,51 @@ def move_column_to_the_front(original_dataframe: pd.DataFrame, column_to_move: s
     return original_dataframe
 
 
+def addPrevAndPrevPrevEvent(original_dataframe: pd.DataFrame, unique_classifications: int, event_column_name: str, session_column_name: str) -> pd.DataFrame:
+    """ 
+    Returns the DataFrame with the prev_event and the prev_prev_event feature.
+
+    Args:
+        original_dataframe (pd.DataFrame): The input DataFrame to modify.
+        unique_classifications (int): Number of unique classifications including the placeholder for unknown labels.
+        event_column_name (str): Name of the column which prev and prev_prev features should be added.
+        session_column_name (str): Name of the column that saves the session.
+
+    Returns:
+        pd.DataFrame: A modified version of the input DataFrame with added prev_event and prev_prev_event features.
+    """
+    prev_event = []
+    prev_prev_event = []
+
+    for i in range(0, len(original_dataframe)):
+        if i == 0:
+            prev_event.append(unique_classifications)
+            prev_prev_event.append(unique_classifications)
+
+        elif i == 1:
+            prev_event.append(original_dataframe.iloc[i-1][event_column_name])
+            prev_prev_event.append(unique_classifications)
+
+        elif original_dataframe.iloc[i-2][session_column_name] == original_dataframe.iloc[i-1][session_column_name] == original_dataframe.iloc[i][session_column_name]:
+            prev_event.append(original_dataframe.iloc[i-1][event_column_name])
+            prev_prev_event.append(
+                original_dataframe.iloc[i-2][event_column_name])
+
+        elif original_dataframe.iloc[i-1][session_column_name] == original_dataframe.iloc[i][session_column_name]:
+            prev_event.append(original_dataframe.iloc[i-1][event_column_name])
+            prev_prev_event.append(unique_classifications)
+
+        elif original_dataframe.iloc[i-1][session_column_name] != original_dataframe.iloc[i][session_column_name]:
+            prev_event.append(unique_classifications)
+            prev_prev_event.append(unique_classifications)
+
+    original_dataframe.insert(
+        0, f"prev_prev_{event_column_name}", prev_prev_event, allow_duplicates=True)
+    original_dataframe.insert(
+        0, f"prev_{event_column_name}", prev_event, allow_duplicates=True)
+    return original_dataframe
+
+
 def get_weather_data(original_dataframe: pd.DataFrame, column_to_encode: str, json_subarray_name: str, parsed_json: dict) -> pd.DataFrame:
     """ 
     Returns the DataFrame with more detailed weather data. 
@@ -220,6 +295,66 @@ def get_weather_data(original_dataframe: pd.DataFrame, column_to_encode: str, js
     original_dataframe = original_dataframe.drop(columns=column_to_encode)
 
     return original_dataframe
+
+
+def define_columns_to_drop(original_dataframe: pd.DataFrame) -> list[str]:
+    """
+    Returns a list of all absolute columns from a predefined list that are presented in the DataFrame.
+
+    Args:
+        original_dataframe (pd.DataFrame): The DataFrame, which columns are compared to the predefined list of absolute values.
+
+    Returns:
+        list[str]: A list containing all the columns that are going to be dropped.
+    """
+    possible_columns_to_drop = ['weather_day_id moon_set', 'weather_day_id moon_rise', 'content_portal', 'device_online', 'time_utc', 'time_local',
+                                'device_height_px', 'device_width_px', 'weather_day_id sun_set', 'weather_day_id sun_rise', 'weather_day_id moon_set',
+                                'weather_day_id moon_rise', 'weather_day_id created_at', 'weather_day_id calculated_at', 'weather_day_id forecast_date',
+                                'weather_hour_id created_at', 'weather_hour_id calculated_at', 'weather_hour_id forecast_time', 'event_data.for_date']
+    columns_in_dataframe = [col for col in original_dataframe.columns]
+    return [col for col in possible_columns_to_drop if col in columns_in_dataframe]
+
+
+def define_ohe_features_list(original_dataframe: pd.DataFrame) -> list[str]:
+    """
+    Returns a list of all one hot encoded features from a predefined list that are presented in the DataFrame.
+
+    Args:
+        original_dataframe (pd.DataFrame): The DataFrame, which columns are compared to the predefined list of ordinal values.
+
+    Returns:
+        list[str]: A list containing all the columns that are going to be one hot encoded.
+    """
+    possible_ohe_features = ['device_class', 'device_orientation', 'oha_language_iso2', 'oha_layout',
+                             'device_country_iso2', 'device_language_iso2', 'event_type', 'device_platform']
+
+    features_in_dataframe = [col for col in original_dataframe.columns]
+    return [feature for feature in possible_ohe_features if feature in features_in_dataframe]
+
+
+def define_ordinal_features_list(original_dataframe: pd.DataFrame) -> list[str]:
+    """
+    Returns a list of all ordinal features from a predefined list that are presented in the DataFrame.
+
+    Args:
+        original_dataframe (pd.DataFrame): The DataFrame, which columns are compared to the predefined list of ordinal values.
+
+    Returns:
+        list[str]: A list containing all the columns that are going to be scaled.
+    """
+    possible_ordinal_features = ['time_dow_sin', 'time_dow_cos', 'time_hod_sin', 'time_hod_cos', 'weather_hour_id thunderstorm_prob', 'weather_day_id thunderstorm_prob',
+                                 'weather_hour_id wind_direction_sin', 'weather_hour_id wind_direction_cos', 'weather_day_id sunshine_h', 'weather_day_id temp_max_c',
+                                 'weather_day_id temp_min_c', 'weather_day_id moon_phase_sin', 'weather_day_id prec_prob_pct', 'weather_day_id prec_rain_mm_h',
+                                 'weather_day_id prec_snow_mm_h', 'weather_day_id wind_speed_kmh', 'weather_day_id prec_total_mm_h', 'weather_day_id temp_felt_max_c',
+                                 'weather_day_id temp_felt_min_c', 'weather_day_id humidity_mean_pct', 'weather_day_id wind_speed_max_kmh', 'weather_day_id cloud_cover_max_pct',
+                                 'weather_day_id cloud_cover_min_pct', 'weather_day_id cloud_cover_mean_pct', 'weather_hour_id temp_c', 'weather_hour_id sunshine_h',
+                                 'weather_hour_id temp_felt_c', 'weather_hour_id humidity_pct', 'weather_hour_id prec_rain_mm_h', 'weather_hour_id prec_snow_mm_h',
+                                 'weather_day_id wind_direction_sin', 'weather_day_id wind_direction_cos', 'weather_hour_id wind_speed_kmh', 'weather_hour_id cloud_cover_pct',
+                                 'weather_hour_id prec_total_mm_h', 'weather_hour_id forecast_distance_h', 'weather_hour_id wind_strength', 'weather_day_id wind_strength',
+                                 'weather_day_id moon_phase_cos', 'weather_hour_id prec_snow_mm_h', 'weather_day_id wind_strength', 'weather_day_id prec_snow_mm_h',
+                                 'weather_hour_id wind_strength', 'weather_hour_id forecast_distance_h']
+    features_in_dataframe = [col for col in original_dataframe.columns]
+    return [feature for feature in possible_ordinal_features if feature in features_in_dataframe]
 
 
 def encode_cyclic_feature(original_dataframe: pd.DataFrame, column_to_encode: str, period: int) -> pd.DataFrame:

@@ -1,11 +1,12 @@
 """
 This module contains the functions split the data for the embedding layers from the remaining, non-embedded features.
 
-Functions:rns a tuple of np.arrays.
+Functions:.
 
-    split_3D_set
     split_2D_sets(original_array: np.array) -> tuple[np.array, np.array]:
-        Retus(original_array: np.array) -> tuple[np.array, np.array]:
+        Returns a tuple of np.arrays.
+    
+    split_3D_sets(original_array: np.array) -> tuple[np.array, np.array]:
         Returns a tuple of np.arrays.
 """
 

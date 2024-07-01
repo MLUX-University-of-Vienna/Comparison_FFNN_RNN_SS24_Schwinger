@@ -1,5 +1,5 @@
 """
-This module contains the subclass for the recurrent neural network
+This module contains the subclass for the recurrent neural network  to test only the content_id, prev_content_id, prev_prev_content_id and the session_id. 
 """
 
 import keras
@@ -11,12 +11,22 @@ from sklearn.model_selection import KFold, StratifiedKFold
 from Helpers.model import *
 
 
-class RNN(Model):
+class RNN_content(Model):
     """
     A custom model class for the needed functionality regarding a recurrent network and the hypertuning process.
 
     Attributes:
-        Inherits all attributes from the Model superclass
+            X_train_prev_event_input_dim (int): Variable containing the input dimension for the prev_event embedding layer.
+            X_train_prev_prev_event_input_dim (int): Variable containing the input dimension for the prev_prev_event embedding layer.
+            X_train_session_id_input_dim (int): Variable containing the input dimension for the session_id embedding layer.
+            X_train (np.array): Array containing the training samples without the data for the embedding layers.
+            y_train (np.array): Array containing the labels of the training data.
+            unique_classifications (int): Number of unique labels in the dataset.
+            X_train_prev_event (np.array): Array containing data to train the prev_event embedding layer.
+            X_train_prev_prev_event (np.array): Array containing data to train the prev_prev_event embedding layer.
+            X_train_session_id (np.array): Array containing data to train the session_id embedding layer.
+            X_train_content_id (np.array): Array containing data to train the content_id embedding layer.
+            number_of_folds (int): Number of folds for cross validation, if there are less than 10 different labels.
 
     Methods:
         Inherits visualizeTrainingResults from the Model superclass
@@ -24,7 +34,7 @@ class RNN(Model):
             Prints the loss and accuracy of each trained model.
             Plots the evolution of the loss and accuracy value for each trained model.
 
-        create_model(hp_prev: int, hp_prev_prev: int, hp_session: int, hp_device: int, hp_output: int,
+        create_model(hp_prev: int, hp_prev_prev: int, hp_session: int, hp_output: int,
                     hp_units: int, hp_layers: int, hp_learning_rate: float, hp_optimizer: str, hp_dropout: float) 
                     -> keras.src.models.functional.Functional:
             Returns a recurrent neural network with the as arguments passed hypertuned parameters.
@@ -46,16 +56,50 @@ class RNN(Model):
             Returns a tuple with the loss, accuracy and a history object containing the loss and accuracy evolution over the training process.
     """
 
-    def create_model(self, hp_prev: int, hp_prev_prev: int, hp_session: int, hp_device: int, hp_output: int,
+    def __init__(self, X_train_prev_event_input_dim: int, X_train_prev_prev_event_input_dim: int,
+                 X_train_session_id_input_dim: int, X_train: np.array, y_train: np.array,
+                 unique_classifications: int, X_train_prev_event: np.array, X_train_prev_prev_event: np.array,
+                 X_train_session_id: np.array, X_train_content_id: np.array, number_of_folds: int) -> None:
+        """
+        Initalized a variables of type model with all relevant fields, that will be needed for the rest of the class.
+
+        Args:   
+            X_train_prev_event_input_dim (int): Variable containing the input dimension for the prev_event embedding layer.
+            X_train_prev_prev_event_input_dim (int): Variable containing the input dimension for the prev_prev_event embedding layer.
+            X_train_session_id_input_dim (int): Variable containing the input dimension for the session_id embedding layer.
+            X_train (np.array): Array containing the training samples without the data for the embedding layers.
+            y_train (np.array): Array containing the labels of the training data.
+            unique_classifications (int): Number of unique labels in the dataset.
+            X_train_prev_event (np.array): Array containing data to train the prev_event embedding layer.
+            X_train_prev_prev_event (np.array): Array containing data to train the prev_prev_event embedding layer.
+            X_train_session_id (np.array): Array containing data to train the session_id embedding layer.
+            X_train_content_id (np.array): Array containing data to train the content_id embedding layer.
+            number_of_folds (int): Number of folds for cross validation, if there are less than 10 different labels.
+
+        Returns:
+            Model: Initalized Model object.
+        """
+        self.X_train_prev_event_input_dim = X_train_prev_event_input_dim
+        self.X_train_prev_prev_event_input_dim = X_train_prev_prev_event_input_dim
+        self.X_train_session_id_input_dim = X_train_session_id_input_dim
+        self.X_train = X_train
+        self.y_train = y_train
+        self.unique_classifications = unique_classifications
+        self.X_train_prev_event = X_train_prev_event
+        self.X_train_prev_prev_event = X_train_prev_prev_event
+        self.X_train_session_id = X_train_session_id
+        self.X_train_content_id = X_train_content_id
+        self.number_of_folds = number_of_folds
+
+    def create_model(self, hp_prev: int, hp_prev_prev: int, hp_session: int, hp_output: int,
                      hp_units: int, hp_layers: int, hp_learning_rate: float, hp_optimizer: str, hp_dropout: float, hp_recurrent_dropout: float) -> keras.src.models.functional.Functional:
         """ 
-        Returns a recurrent neural network with the as arguments passed hypertuned parameters.
+        Returns a recurrent neural network with the as arguments passed hypertuned parameters. 
 
         Args:
             hp_prev (int): The hypertuned parameter for the output dimension of the prev_event embedding layer.
             hp_prev_prev (int): The hypertuned parameter for the output dimension of the prev_prev_event embedding layer. 
             hp_session (int): The hypertuned parameter for the output dimension of the session_id embedding layer.
-            hp_device(int):  The hypertuned parameter for the output dimension of the device_id embedding layer. 
             hp_output (int): The hypertuned parameter for the output dimension of the output (content_id) embedding layer.
             hp_units (int): The hypertuned parameter for the amount of neurons in the hidden layers.
             hp_layers (int): The hypertuned parameter amount of hidden layers.
@@ -83,11 +127,6 @@ class RNN(Model):
         embedding_layer_session_id = tf.keras.layers.Embedding(
             input_dim=self.X_train_session_id_input_dim, output_dim=hp_session)(embedding_input_session_id)
 
-        embedding_input_device_id = tf.keras.layers.Input(
-            shape=(self.X_train_device_id.shape[1],))
-        embedding_layer_device_id = tf.keras.layers.Embedding(
-            input_dim=self.X_train_device_id_input_dim, output_dim=hp_device)(embedding_input_device_id)
-
         embedding_input_content_id = tf.keras.layers.Input(
             shape=(self.X_train_content_id.shape[1],))
         embedding_layer_content_id = tf.keras.layers.Embedding(
@@ -97,7 +136,7 @@ class RNN(Model):
             shape=(self.X_train.shape[1], self.X_train.shape[2]))
 
         concatenated_embeddings = tf.keras.layers.Concatenate(
-            axis=-1)([embedding_layer_prev_event, embedding_layer_prev_prev_event, embedding_layer_session_id, embedding_layer_device_id, embedding_layer_content_id, input_features])
+            axis=-1)([embedding_layer_prev_event, embedding_layer_prev_prev_event, embedding_layer_session_id, embedding_layer_content_id, input_features])
 
         for i in range(hp_layers):
             if i + 1 != hp_layers:
@@ -119,7 +158,7 @@ class RNN(Model):
             self.unique_classifications, activation='softmax')(concatenated_embeddings)
 
         model = tf.keras.models.Model(inputs=[embedding_input_prev_event, embedding_input_prev_prev_event,
-                                      embedding_input_session_id, embedding_input_device_id, embedding_input_content_id, input_features], outputs=outputs)
+                                      embedding_input_session_id, embedding_input_content_id, input_features], outputs=outputs)
 
         if hp_optimizer == 'adam':
             optimizer = tf.keras.optimizers.Adam(
@@ -168,8 +207,6 @@ class RNN(Model):
             'output_dim_prev_prev_event', 1, self.X_train_prev_prev_event_input_dim, step=2)
         hp_output3 = trial.suggest_int(
             'output_dim_session_id', 1, self.X_train_session_id_input_dim, step=2)
-        hp_output4 = trial.suggest_int(
-            'output_dim_device_id', 1, self.X_train_device_id_input_dim, step=2)
         hp_output5 = trial.suggest_int(
             'output_dim_output', 1, self.unique_classifications, step=2)
         hp_units = trial.suggest_int(
@@ -185,7 +222,7 @@ class RNN(Model):
         hp_batch_size = trial.suggest_categorical(
             'batch_size', [1, 8, 16, 32, 64, 128])
 
-        model = self.create_model(hp_output1, hp_output2, hp_output3, hp_output4, hp_output5,
+        model = self.create_model(hp_output1, hp_output2, hp_output3, hp_output5,
                                   hp_units, hp_layers, hp_learning_rate, hp_optimizer, hp_dropout, hp_recurrent_dropout)
 
         if self.number_of_folds < 10:
@@ -204,15 +241,13 @@ class RNN(Model):
                 train_index], self.X_train_prev_prev_event[val_index]
             X_train_session_fold, X_val_session_fold = self.X_train_session_id[
                 train_index], self.X_train_session_id[val_index]
-            X_train_device_fold, X_val_device_fold = self.X_train_device_id[
-                train_index], self.X_train_device_id[val_index]
             X_train_output_fold, X_val_output_fold = self.X_train_content_id[
                 train_index], self.X_train_content_id[val_index]
 
             X_train_fold_inputs = [X_train_prev_event_fold, X_train_prev_prev_event_fold,
-                                   X_train_session_fold, X_train_device_fold, X_train_output_fold, X_train_fold]
+                                   X_train_session_fold, X_train_output_fold, X_train_fold]
             X_val_fold_inputs = [X_val_prev_event_fold, X_val_prev_prev_event_fold,
-                                 X_val_session_fold, X_val_device_fold, X_val_output_fold, X_val_fold]
+                                 X_val_session_fold, X_val_output_fold, X_val_fold]
 
             y_train_fold, y_val_fold = self.y_train[train_index], self.y_train[val_index]
 
@@ -248,8 +283,6 @@ class RNN(Model):
             'output_dim_prev_prev_event', 1, self.X_train_prev_prev_event_input_dim, step=2)
         hp_output3 = trial.suggest_int(
             'output_dim_session_id', 1, self.X_train_session_id_input_dim, step=2)
-        hp_output4 = trial.suggest_int(
-            'output_dim_device_id', 1, self.X_train_device_id_input_dim, step=2)
         hp_output5 = trial.suggest_int(
             'output_dim_output', 1, self.unique_classifications, step=2)
         hp_units = trial.suggest_int(
@@ -265,7 +298,7 @@ class RNN(Model):
         hp_batch_size = trial.suggest_categorical(
             'batch_size', [1, 8, 16, 32, 64, 128])
 
-        model = self.create_model(hp_output1, hp_output2, hp_output3, hp_output4, hp_output5,
+        model = self.create_model(hp_output1, hp_output2, hp_output3, hp_output5,
                                   hp_units, hp_layers, hp_learning_rate, hp_optimizer, hp_dropout, hp_recurrent_dropout)
 
         if self.number_of_folds < 10:
@@ -273,8 +306,7 @@ class RNN(Model):
         else:
             n_splits = 10
 
-        kfold = StratifiedKFold(
-            n_splits=n_splits, shuffle=True)
+        kfold = StratifiedKFold(n_splits=n_splits, shuffle=True)
         val_accuracies = []
 
         for train_index, val_index in kfold.split(self.X_train, self.y_train):
@@ -285,23 +317,21 @@ class RNN(Model):
                 train_index], self.X_train_prev_prev_event[val_index]
             X_train_session_fold, X_val_session_fold = self.X_train_session_id[
                 train_index], self.X_train_session_id[val_index]
-            X_train_device_fold, X_val_device_fold = self.X_train_device_id[
-                train_index], self.X_train_device_id[val_index]
             X_train_output_fold, X_val_output_fold = self.X_train_content_id[
                 train_index], self.X_train_content_id[val_index]
 
             X_train_fold_inputs = [X_train_prev_event_fold, X_train_prev_prev_event_fold,
-                                   X_train_session_fold, X_train_device_fold, X_train_output_fold, X_train_fold]
+                                   X_train_session_fold, X_train_output_fold, X_train_fold]
             X_val_fold_inputs = [X_val_prev_event_fold, X_val_prev_prev_event_fold,
-                                 X_val_session_fold, X_val_device_fold, X_val_output_fold, X_val_fold]
+                                 X_val_session_fold, X_val_output_fold, X_val_fold]
 
             y_train_fold, y_val_fold = self.y_train[train_index], self.y_train[val_index]
 
             early_stopping = keras.callbacks.EarlyStopping(
-                monitor="loss", mode="min", patience=3)
+                monitor="loss", mode="min", patience=5)
 
             model.fit(X_train_fold_inputs, y_train_fold, epochs=25, validation_data=(
-                X_val_fold_inputs, y_val_fold), batch_size=hp_batch_size, callbacks=[early_stopping], verbose=1)
+                X_val_fold_inputs, y_val_fold), batch_size=hp_batch_size, callbacks=[early_stopping], verbose=0)
 
             val_accuracies.append(model.evaluate(
                 X_val_fold_inputs, y_val_fold, verbose=0)[1])
@@ -352,7 +382,6 @@ class RNN(Model):
         best_model = self.create_model(best_trial.params['output_dim_prev_event'],
                                        best_trial.params['output_dim_prev_prev_event'],
                                        best_trial.params['output_dim_session_id'],
-                                       best_trial.params['output_dim_device_id'],
                                        best_trial.params['output_dim_output'],
                                        best_trial.params['units'],
                                        best_trial.params['layers'],
@@ -363,7 +392,7 @@ class RNN(Model):
 
         early_stopping = keras.callbacks.EarlyStopping(monitor="loss",
                                                        mode="min",
-                                                       patience=3)
+                                                       patience=5)
         history = best_model.fit(X_train_inputs, self.y_train,
                                  epochs=epochs, batch_size=best_trial.params['batch_size'], callbacks=[early_stopping])
         test_loss, test_accuracy = best_model.evaluate(X_test_inputs, y_test)

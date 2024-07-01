@@ -26,9 +26,8 @@ Functions:
     pad_classifications(list_of_all_classifications: list[float], sequence_length: int) -> list[float]:
         Return a multidimensional list of padded classifications.
 
-    get_embedding_input_dim(array_to_embed: np.array) -> int:
-        Returns the necessary size of the input dimension for the embedding layer.
-        The necessary size is the amount of unique values for the relevant variable.
+    get_embedding_input_dim(train_array_to_embed: np.array, test_array_to_embed: np.array) -> int:
+        Returns the maximum value of the train and test arrays to calculate the input dimension for the dimension of the embedding layer.
 """
 
 
@@ -200,15 +199,17 @@ def pad_classifications(list_of_all_classifications: list[float], sequence_lengt
     return padded_list
 
 
-def get_embedding_input_dim(array_to_embed: np.array) -> int:
+def get_embedding_input_dim(train_array_to_embed: np.array, test_array_to_embed: np.array) -> int:
     """ 
-    Returns the necessary size of the input dimension for the embedding layer.
-    The necessary size is the amount of unique values for the relevant variable.
+    Returns the maximum value of the train and test arrays to calculate the input dimension for the dimension of the embedding layer.
 
     Parameters:
-        array_to_embbed (np.array): The input array used for calculation.
+        train_array_to_embed (np.array): The array with the training data used..
+        test_array_to_embed (np.array): The array with the test data used.
 
     Returns:
         int: The necessary size of the input dimension for the embedding layer.
     """
-    return len(set(array_to_embed.flatten()))
+    train_max = int(max(set(train_array_to_embed.flatten()))) + 1
+    test_max = int(max(set(test_array_to_embed.flatten()))) + 1
+    return max(train_max, test_max)

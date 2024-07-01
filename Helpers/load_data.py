@@ -52,7 +52,7 @@ def load_data_from_smaller_json(parsed_json: dict) -> pd.DataFrame:
     all_records = pd.DataFrame()
     json_subarray_name = 'traces'
     for i in pd.json_normalize(parsed_json[json_subarray_name]):
-        single_record = pd.json_normalize(parsed_json[json_subarray_name][i])
+        single_record = pd.json_normalize(parsed_json[json_subarray_name][i-1])
         all_records = pd.concat(
             [all_records, single_record], ignore_index=True)
     return all_records

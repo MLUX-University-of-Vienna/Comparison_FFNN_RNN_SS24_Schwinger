@@ -26,6 +26,7 @@ class Model:
         X_train_session_id (np.array): Array containing data to train the session_id embedding layer.
         X_train_device_id (np.array): Array containing data to train the device_id embedding layer.
         X_train_content_id (np.array): Array containing data to train the content_id embedding layer.
+        number_of_folds (int): Number of folds for cross validation, if there are less than 10 different labels.
 
     Methods:
         visualizeTrainingResults(eval_data: list[tuple[float, float, keras.src.callbacks.history.History]]) -> None:
@@ -36,7 +37,7 @@ class Model:
     def __init__(self, X_train_prev_event_input_dim: int, X_train_prev_prev_event_input_dim: int,
                  X_train_session_id_input_dim: int, X_train_device_id_input_dim: int, X_train: np.array, y_train: np.array,
                  unique_classifications: int, X_train_prev_event: np.array, X_train_prev_prev_event: np.array,
-                 X_train_session_id: np.array, X_train_device_id: np.array, X_train_content_id: np.array) -> None:
+                 X_train_session_id: np.array, X_train_device_id: np.array, X_train_content_id: np.array, number_of_folds: int) -> None:
         """
         Initalized a variables of type model with all relevant fields, that will be needed for the rest of the class.
 
@@ -53,6 +54,7 @@ class Model:
             X_train_session_id (np.array): Array containing data to train the session_id embedding layer.
             X_train_device_id (np.array): Array containing data to train the device_id embedding layer.
             X_train_content_id (np.array): Array containing data to train the content_id embedding layer.
+            number_of_folds (int): Number of folds for cross validation, if there are less than 10 different labels.
 
         Returns:
             Model: Initalized Model object.
@@ -69,6 +71,7 @@ class Model:
         self.X_train_session_id = X_train_session_id
         self.X_train_device_id = X_train_device_id
         self.X_train_content_id = X_train_content_id
+        self.number_of_folds = number_of_folds
 
     def visualizeTrainingResults(self, eval_data: list[tuple[float, float, keras.src.callbacks.history.History]]) -> None:
         """
@@ -92,5 +95,5 @@ class Model:
             accuracies.append(accuracy)
             histories.append(history)
 
-        print(f'Loss: {losses}\nAccuracy: {accuracies}')
+        plot.plot_accuracy_loss(accuracies, losses)
         plot.plot_history(histories)
