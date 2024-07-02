@@ -9,9 +9,6 @@ Functions:
     remove_low_appearance_values(original_dataframe: pd.DataFrame, count_threshold: int, column_name: str) -> pd.DataFrame:
         Calculates how often each unique values appears in a specific column of the {original_dataframe}.
         Rows in the {original_dataframe} with unique values appearing below the {count_threshold} will get removed from the DataFrame.
-
-    get_number_of_folds(original_dataframe: pd.DataFrame, name_of_the_column: str) -> int:
-        Returns the number of unique value's for a specific column of the {original_dataframe}.
     
     number_of_unique_values_per_column(dataframe: pd.DataFrame) -> list[(str, int)]:
         Returns a list of tuples containing column names and the amount of unique values in this column.
@@ -145,21 +142,6 @@ def remove_low_appearance_values(original_dataframe: pd.DataFrame, count_thresho
     """
     appearance_count = original_dataframe[column_name].value_counts()
     return original_dataframe[~original_dataframe[column_name].isin(appearance_count[appearance_count < count_threshold].index.tolist())]
-
-
-def get_number_of_folds(original_dataframe: pd.DataFrame, name_of_the_column: str) -> int:
-    """
-    Returns the number of unique value's for a specific column of the {original_dataframe}.
-    Args:
-        original_dataframe (pd.DataFrame): The DataFrame used to find all columns are the number of unique values per column.
-        name_of_the_column (str): Name of the columns whose number of unique values is searched.
-
-    Returns:
-        int: Number of unique values in the searched column
-    """
-    for key, value in number_of_unique_values_per_column(original_dataframe):
-        if key == name_of_the_column:
-            return value
 
 
 def number_of_unique_values_per_column(dataframe: pd.DataFrame) -> list[(str, int)]:

@@ -1,14 +1,15 @@
 import logging
-import matplotlib
 import os
+
+import matplotlib
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from Helpers import (load_data, preprocess_dataframe,
                      preprocess_feature_vectors, split_sets)
-from Helpers.rnn_model import *
 from Helpers.model import *
+from Helpers.rnn_model import *
 
 matplotlib.use('Qt5Agg')
 directory = "logging"
@@ -30,9 +31,6 @@ all_sessions = preprocess_dataframe.remove_low_appearance_values(
 
 all_sessions = preprocess_dataframe.replace_null_values_with_column_mode(
     all_sessions)
-
-number_of_folds = preprocess_dataframe.get_number_of_folds(
-    all_sessions, 'content_id')
 
 all_sessions = preprocess_dataframe.encode_cyclic_feature(
     all_sessions, 'time_hod', 24)
@@ -96,6 +94,8 @@ classification_labels = np.array(classification_labels)
 
 X_train, X_test, y_train, y_test = train_test_split(
     input_features_padded, classification_labels, test_size=0.1)
+
+number_of_folds = preprocess_feature_vectors.get_number_of_folds(y_test)
 
 # split the X_train and X_test arrays to get the necessary data for the embedding layers
 X_train_prev_event, X_train = split_sets.split_3D_sets(X_train)

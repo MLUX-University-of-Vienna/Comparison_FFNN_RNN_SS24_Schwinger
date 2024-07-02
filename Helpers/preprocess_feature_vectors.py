@@ -28,6 +28,10 @@ Functions:
 
     get_embedding_input_dim(train_array_to_embed: np.array, test_array_to_embed: np.array) -> int:
         Returns the maximum value of the train and test arrays to calculate the input dimension for the dimension of the embedding layer.
+
+    get_number_of_folds(test_array: np.array) -> int:
+        Returns the number of unique sessions_id's in the test_array.
+
 """
 
 
@@ -213,3 +217,16 @@ def get_embedding_input_dim(train_array_to_embed: np.array, test_array_to_embed:
     train_max = int(max(set(train_array_to_embed.flatten()))) + 1
     test_max = int(max(set(test_array_to_embed.flatten()))) + 1
     return max(train_max, test_max)
+
+
+def get_number_of_folds(test_array: np.array) -> int:
+    """
+    Returns the number of unique sessions_id's in the test_array.
+    Args:
+        original_dataframe (pd.DataFrame): The DataFrame used to find all columns are the number of unique values per column.
+        name_of_the_column (str): Name of the columns whose number of unique values is searched.
+
+    Returns:
+        int: Number of unique values in the searched column
+    """
+    return int(len(set(test_array.flatten())))

@@ -1,13 +1,14 @@
 import logging
-import matplotlib
 import os
+
+import matplotlib
 import numpy as np
 from sklearn.model_selection import train_test_split
 
 from Helpers import (load_data, preprocess_dataframe,
                      preprocess_feature_vectors, split_sets)
-from Helpers.rnn_only_content_id import *
 from Helpers.model import *
+from Helpers.rnn_only_content_id import *
 
 matplotlib.use('Qt5Agg')
 directory = "logging"
@@ -26,9 +27,6 @@ all_sessions = load_data.load_data_from_larger_json(parsed_json)
 
 all_sessions = preprocess_dataframe.remove_low_appearance_values(
     all_sessions, 2, 'content_id')
-
-number_of_folds = preprocess_dataframe.get_number_of_folds(
-    all_sessions, 'content_id')
 
 # absolute data with little relevance or data with too many null values
 columns_to_drop = preprocess_dataframe.define_columns_to_drop(all_sessions)
@@ -76,6 +74,8 @@ classification_labels = np.array(classification_labels)
 
 X_train, X_test, y_train, y_test = train_test_split(
     input_features_padded, classification_labels, test_size=0.1)
+
+number_of_folds = preprocess_feature_vectors.get_number_of_folds(y_test)
 
 # split the X_train and X_test arrays to get the necessary data for the embedding layers
 X_train_prev_event, X_train = split_sets.split_3D_sets(X_train)

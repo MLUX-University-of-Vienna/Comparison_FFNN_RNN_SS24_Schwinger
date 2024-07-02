@@ -1,6 +1,7 @@
 import logging
-import matplotlib
 import os
+
+import matplotlib
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -30,9 +31,6 @@ all_sessions = preprocess_dataframe.remove_low_appearance_values(
 
 all_sessions = preprocess_dataframe.replace_null_values_with_column_mode(
     all_sessions)
-
-number_of_folds = preprocess_dataframe.get_number_of_folds(
-    all_sessions, 'content_id')
 
 all_sessions = preprocess_dataframe.encode_cyclic_feature(
     all_sessions, 'time_hod', 24)
@@ -89,6 +87,8 @@ classification_labels_array = np.array(classification_labels)
 
 X_train, X_test, y_train, y_test = train_test_split(
     input_features_array, classification_labels_array, test_size=0.1)
+
+number_of_folds = preprocess_feature_vectors.get_number_of_folds(y_test)
 
 # split the X_train and X_test arrays to get the necessary data for the embedding layers
 X_train_prev_event, X_train = split_sets.split_2D_sets(X_train)
