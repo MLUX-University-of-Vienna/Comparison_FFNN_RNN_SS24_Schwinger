@@ -24,10 +24,13 @@ logging.basicConfig(filename=log_file_path, encoding='utf-8',
 dataset = 'demo-s-anon.json'
 path_to_dataset = os.path.join('datasets', dataset)
 parsed_json = load_data.load_json(path_to_dataset)
-all_sessions = load_data.load_data_from_larger_json(parsed_json)
+all_sessions = load_data.load_data_from_json(parsed_json)
 
 all_sessions = preprocess_dataframe.remove_low_appearance_values(
     all_sessions, 2, 'content_id')
+
+all_sessions = preprocess_dataframe.replace_null_values_in_one_column_with_a_placeholder(
+    all_sessions, 'event_type', parsed_json, 'trace_enums')
 
 all_sessions = preprocess_dataframe.replace_null_values_with_column_mode(
     all_sessions)
@@ -124,13 +127,13 @@ X_train, X_test, y_train, y_test = train_test_split(
 number_of_folds = preprocess_feature_vectors.get_number_of_folds(y_test)
 
 # split the X_train and X_test arrays to get the necessary data for the embedding layers
-X_train_session_id, X_train = split_sets.split_3D_sets(X_train)
-X_train_device_id, X_train = split_sets.split_3D_sets(X_train)
-X_train_content_id, X_train = split_sets.split_3D_sets(X_train)
+X_train_session_id, X_train = split_sets.split_recurrent_sets(X_train)
+X_train_device_id, X_train = split_sets.split_recurrent_sets(X_train)
+X_train_content_id, X_train = split_sets.split_recurrent_sets(X_train)
 
-X_test_session_id, X_test = split_sets.split_3D_sets(X_test)
-X_test_device_id, X_test = split_sets.split_3D_sets(X_test)
-X_test_content_id, X_test = split_sets.split_3D_sets(X_test)
+X_test_session_id, X_test = split_sets.split_recurrent_sets(X_test)
+X_test_device_id, X_test = split_sets.split_recurrent_sets(X_test)
+X_test_content_id, X_test = split_sets.split_recurrent_sets(X_test)
 
 X_train_session_id_input_dim = preprocess_feature_vectors.get_embedding_input_dim(
     X_train_session_id, X_test_session_id)

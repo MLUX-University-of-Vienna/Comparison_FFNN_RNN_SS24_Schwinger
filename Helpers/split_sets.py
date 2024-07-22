@@ -3,10 +3,10 @@ This module contains the functions split the data for the embedding layers from 
 
 Functions:.
 
-    split_2D_sets(original_array: np.array) -> tuple[np.array, np.array]:
+    split_feed_forward_sets(original_array: np.array) -> tuple[np.array, np.array]:
         Returns a tuple of np.arrays.
     
-    split_3D_sets(original_array: np.array) -> tuple[np.array, np.array]:
+    split_recurrent_sets(original_array: np.array) -> tuple[np.array, np.array]:
         Returns a tuple of np.arrays.
 """
 
@@ -14,7 +14,7 @@ Functions:.
 import numpy as np
 
 
-def split_2D_sets(original_array: np.array) -> tuple[np.array, np.array]:
+def split_feed_forward_sets(original_array: np.array) -> tuple[np.array, np.array]:
     """ 
     Returns a tuple of np.arrays.
 
@@ -29,7 +29,7 @@ def split_2D_sets(original_array: np.array) -> tuple[np.array, np.array]:
     return original_array[:, :1], original_array[:, 1:]
 
 
-def split_3D_sets(original_array: np.array) -> tuple[np.array, np.array]:
+def split_recurrent_sets(original_array: np.array) -> tuple[np.array, np.array]:
     """ 
     Returns a tuple of np.arrays.
 

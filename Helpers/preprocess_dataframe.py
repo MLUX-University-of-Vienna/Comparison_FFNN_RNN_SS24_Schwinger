@@ -13,6 +13,15 @@ Functions:
     number_of_unique_values_per_column(dataframe: pd.DataFrame) -> list[(str, int)]:
         Returns a list of tuples containing column names and the amount of unique values in this column.
 
+    replace_null_values_in_one_column_with_a_placeholder(original_dataframe: pd.DataFrame, dataframe_column_name: str, parsed_json: dict, json_subarray_name: str):
+        Replaces null (nan) values in a specific column with a placeholder.
+        Assumes the null value is a float nan and not a string 'null'
+        Only works if the column in the dataframe has an enum defining how to transform the value into an integer value.
+        For example: event_type. The event_type has a trace_enum entry listing all possible different values.
+        This method gets this list and calculates the individual number of possible entries. 
+        The placeholder is the highest int from the encoding dict + 1.
+        The placeholder is added as integer value.
+
     replace_null_values_with_column_mode(original_dataframe: pd.DataFrame) -> pd.DataFrame:
         Returns the DataFrame without any null value. 
         Each null value gets substituted with the mode value of the column.
@@ -22,7 +31,7 @@ Functions:
     move_column_to_the_front(original_dataframe: pd.DataFrame, column_to_move: str) -> pd.DataFrame:
         Returns the DataFrame with the {column_to_move} moved at the first index of the DataFrame columns.
     
-    addPrevAndPrevPrevEvent(original_dataframe: pd.DataFrame, unique_classifications: int, event_column_name: str, session_column_name: str) -> pd.DataFrame:
+    add_prev_and_prev_prev_event(original_dataframe: pd.DataFrame, unique_classifications: int, event_column_name: str, session_column_name: str) -> pd.DataFrame:
         Returns the DataFrame with the prev_event and the prev_prev_event feature.
 
     get_weather_data(original_dataframe: pd.DataFrame, column_to_encode: str, json_subarray_name: str, parsed_json: dict) -> pd.DataFrame:
@@ -137,7 +146,7 @@ def remove_low_appearance_values(original_dataframe: pd.DataFrame, count_thresho
         count_threshold (int): All unique values with a value_count below this number will be removed.
         column_name (str): The name of the column in the DataFrame on which the value_count for each unique value is calculated.
 
-    Return:
+    Returns:
         pd.DataFrame: A modified version of the input DataFrame with all classifications below the defined threshold removed.
     """
     appearance_count = original_dataframe[column_name].value_counts()
@@ -157,6 +166,38 @@ def number_of_unique_values_per_column(dataframe: pd.DataFrame) -> list[(str, in
             - The amount of unique values in that column as an integer.
     """
     return [(column, dataframe[column].nunique()) for column in dataframe.columns]
+
+
+def replace_null_values_in_one_column_with_a_placeholder(original_dataframe: pd.DataFrame, dataframe_column_name: str, parsed_json: dict, json_subarray_name: str):
+    """
+    Replaces null (nan) values in a specific column with a placeholder.
+    Assumes the null value is a float nan and not a string 'null'
+    Only works if the column in the dataframe has an enum defining how to transform the value into an integer value.
+    For example: event_type. The event_type has a trace_enum entry listing all possible different values.
+    This method gets this list and calculates the individual number of possible entries. 
+    The placeholder is the highest int from the encoding dict + 1.
+    The placeholder is added as integer value.
+
+    Args:
+        original_dataframe (pd.DataFrame):
+        dataframe_column_name (str):
+        parsed_json (dict):
+        json_subarray_name (str):
+
+    Returns:
+        pd.DataFrame: A modified version of the input DataFrame where all null values are substituted with a placeholder.
+    """
+
+    unique_types = parsed_json[json_subarray_name][dataframe_column_name]
+
+    for i in range(0, len(original_dataframe)):
+        if pd.isna(original_dataframe.iloc[i][dataframe_column_name]):
+            original_dataframe.at[original_dataframe.index[i],
+                                  dataframe_column_name] = len(unique_types)
+
+    original_dataframe[dataframe_column_name] = original_dataframe[dataframe_column_name].astype(
+        int)
+    return original_dataframe
 
 
 def replace_null_values_with_column_mode(original_dataframe: pd.DataFrame) -> pd.DataFrame:
@@ -198,7 +239,7 @@ def move_column_to_the_front(original_dataframe: pd.DataFrame, column_to_move: s
     return original_dataframe
 
 
-def addPrevAndPrevPrevEvent(original_dataframe: pd.DataFrame, unique_classifications: int, event_column_name: str, session_column_name: str) -> pd.DataFrame:
+def add_prev_and_prev_prev_event(original_dataframe: pd.DataFrame, unique_classifications: int, event_column_name: str, session_column_name: str) -> pd.DataFrame:
     """ 
     Returns the DataFrame with the prev_event and the prev_prev_event feature.
 

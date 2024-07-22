@@ -23,10 +23,13 @@ logging.basicConfig(filename=log_file_path, encoding='utf-8',
 dataset = 'demo-s-anon.json'
 path_to_dataset = os.path.join('datasets', dataset)
 parsed_json = load_data.load_json(path_to_dataset)
-all_sessions = load_data.load_data_from_larger_json(parsed_json)
+all_sessions = load_data.load_data_from_json(parsed_json)
 
 all_sessions = preprocess_dataframe.remove_low_appearance_values(
     all_sessions, 2, 'content_id')
+
+all_sessions = preprocess_dataframe.replace_null_values_in_one_column_with_a_placeholder(
+    all_sessions, 'event_type', parsed_json, 'trace_enums')
 
 # absolute data with little relevance or data with too many null values
 columns_to_drop = preprocess_dataframe.define_columns_to_drop(all_sessions)
@@ -48,7 +51,7 @@ for column in embedded_features:
 unique_classifications = all_sessions['content_id'].nunique() + 1
 
 # add (n-1)th and (n-2)th content_id. Move them to front due to the necessary embedding later on and substitute null values.
-all_sessions = preprocess_dataframe.addPrevAndPrevPrevEvent(
+all_sessions = preprocess_dataframe.add_prev_and_prev_prev_event(
     all_sessions, unique_classifications, 'content_id', 'session_id')
 
 columns_to_drop = [col for col in all_sessions.columns if col !=
@@ -78,15 +81,15 @@ X_train, X_test, y_train, y_test = train_test_split(
 number_of_folds = preprocess_feature_vectors.get_number_of_folds(y_test)
 
 # split the X_train and X_test arrays to get the necessary data for the embedding layers
-X_train_prev_event, X_train = split_sets.split_3D_sets(X_train)
-X_train_prev_prev_event, X_train = split_sets.split_3D_sets(X_train)
-X_train_session_id, X_train = split_sets.split_3D_sets(X_train)
-X_train_content_id, X_train = split_sets.split_3D_sets(X_train)
+X_train_prev_event, X_train = split_sets.split_recurrent_sets(X_train)
+X_train_prev_prev_event, X_train = split_sets.split_recurrent_sets(X_train)
+X_train_session_id, X_train = split_sets.split_recurrent_sets(X_train)
+X_train_content_id, X_train = split_sets.split_recurrent_sets(X_train)
 
-X_test_prev_event, X_test = split_sets.split_3D_sets(X_test)
-X_test_prev_prev_event, X_test = split_sets.split_3D_sets(X_test)
-X_test_session_id, X_test = split_sets.split_3D_sets(X_test)
-X_test_content_id, X_test = split_sets.split_3D_sets(X_test)
+X_test_prev_event, X_test = split_sets.split_recurrent_sets(X_test)
+X_test_prev_prev_event, X_test = split_sets.split_recurrent_sets(X_test)
+X_test_session_id, X_test = split_sets.split_recurrent_sets(X_test)
+X_test_content_id, X_test = split_sets.split_recurrent_sets(X_test)
 
 X_train_prev_event_input_dim = preprocess_feature_vectors.get_embedding_input_dim(
     X_train_prev_event, X_test_prev_event)

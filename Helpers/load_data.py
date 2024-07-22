@@ -6,9 +6,6 @@ Functions:
         Loads a JSON file and returns it as a dict.
 
     load_data_from_json(parsed_json: dict) -> pd.DataFrame:
-        Builds a pd.DataFrame from the parsed smaller dataset and returns it.
-    
-    load_data_from_larger_json(parsed_json: dict) -> pd.DataFrame:
         Builds a pd.DataFrame from the parsed larger dataset and returns it.
 """
 
@@ -38,27 +35,7 @@ def load_json(path_to_dataset: str) -> dict:
     return parsed_json
 
 
-def load_data_from_smaller_json(parsed_json: dict) -> pd.DataFrame:
-    """
-    Builds a pd.DataFrame from the parsed smaller dataset and returns it.
-
-    Args:
-        parsed_json (dict): A dict containing the previously parsed dataset.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing the processed data.
-    """
-
-    all_records = pd.DataFrame()
-    json_subarray_name = 'traces'
-    for i in pd.json_normalize(parsed_json[json_subarray_name]):
-        single_record = pd.json_normalize(parsed_json[json_subarray_name][i-1])
-        all_records = pd.concat(
-            [all_records, single_record], ignore_index=True)
-    return all_records
-
-
-def load_data_from_larger_json(parsed_json: dict) -> pd.DataFrame:
+def load_data_from_json(parsed_json: dict) -> pd.DataFrame:
     """
     Builds a pd.DataFrame from the parsed larger dataset and returns it.
 
@@ -71,8 +48,8 @@ def load_data_from_larger_json(parsed_json: dict) -> pd.DataFrame:
 
     all_records = pd.DataFrame()
     json_subarray_name = 'traces'
-    for i in pd.json_normalize(parsed_json[json_subarray_name]):
-        single_record = pd.json_normalize(parsed_json[json_subarray_name][i])
+    for record in parsed_json[json_subarray_name]:
+        single_record = pd.json_normalize(record)
         single_record_filtered = single_record.dropna(how='all', axis=1)
         all_records = pd.concat(
             [all_records, single_record_filtered], ignore_index=True)
