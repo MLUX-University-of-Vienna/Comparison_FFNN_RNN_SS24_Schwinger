@@ -188,8 +188,15 @@ class RNN(Model):
         model = self.create_model(hp_output1, hp_output2, hp_output3, hp_output4, hp_output5,
                                   hp_units, hp_layers, hp_learning_rate, hp_optimizer, hp_dropout, hp_recurrent_dropout)
 
-        if self.number_of_folds < 10:
+        if self.number_of_folds < 10 and self.number_of_folds > 1:
             n_splits = self.number_of_folds
+            '''
+            If every classification only a single time in the y_sets cross validation will not work.
+            Therefore n_split is set to 2, the minimum needed for cross validation.
+            This will never be relevant for real datasets only for the demo datasets.
+            '''
+        elif self.number_of_folds == 1:
+            n_splits = 2
         else:
             n_splits = 10
 
@@ -268,8 +275,15 @@ class RNN(Model):
         model = self.create_model(hp_output1, hp_output2, hp_output3, hp_output4, hp_output5,
                                   hp_units, hp_layers, hp_learning_rate, hp_optimizer, hp_dropout, hp_recurrent_dropout)
 
-        if self.number_of_folds < 10:
+        if self.number_of_folds < 10 and self.number_of_folds > 1:
             n_splits = self.number_of_folds
+            '''
+            If every classification only a single time in the y_sets cross validation will not work.
+            Therefore n_split is set to 2, the minimum needed for cross validation.
+            This will never be relevant for real datasets only for the demo datasets.
+            '''
+        elif self.number_of_folds == 1:
+            n_splits = 2
         else:
             n_splits = 10
 
